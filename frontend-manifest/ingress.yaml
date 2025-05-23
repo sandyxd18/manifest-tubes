@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-todo 
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
+spec:
+  tls:
+  - hosts:
+    - your-domain.example.com
+    secretName: frontend-tls
+  rules:
+  - host: your-domain.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-loadbalancer
+            port:
+              number: 80
+      - path: /api
+        pathType: Prefix
+        backend:
+          service: 
+            name: backend-service
+            port:
+              number: 5000

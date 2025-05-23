@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: sandyxd18/backend-tubes:v1
+        ports:
+          - containerPort: 5000
+        env:
+          - name: FLASK_ENV
+            valueFrom:
+              secretKeyRef:
+                name: backend-secret
+                key: FLASK_ENV
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: backend-secret
+                key: DATABASE_URL
+          - name: JWT_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: backend-secret
+                key: JWT_SECRET_KEY
+          - name: DEFAULT_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: backend-secret
+                key: DEFAULT_ADMIN_PASSWORD
+        imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: backend
+spec:
+  type: ClusterIP
+  selector:
+    app: backend
+  ports:
+    - port: 5000
+      targetPort: 5000
