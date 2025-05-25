@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: sandyxd18/frontend-tubes:v1
+        image: sandyxd18/frontend-tubes:v2
         ports:
         - containerPort: 80
         env:
