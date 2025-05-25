@@ -21,7 +21,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: frontend-service
+            name: frontend-loadbalancer
             port:
               number: 80
       # - path: /api
