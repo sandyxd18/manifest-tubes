@@ -30,6 +30,8 @@ kind: Service
 metadata:
   name: frontend-service
   namespace: frontend
+  labels:
+    app: frontend
 spec:
   type: ClusterIP
   selector:
