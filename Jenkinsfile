@@ -1,27 +1,6 @@
 pipeline {
     agent {
-        kubernetes {
-            yaml """
-apiVersion: v1
-kind: Pod
-spec:
-  containers:
-  - name: kaniko
-    image: gcr.io/kaniko-project/executor:latest
-    tty: true
-  - name: git
-    image: alpine/git
-    command:
-    - cat
-    tty: true
-  - name: argocd
-    image: argoproj/argocd:latest
-    command:
-    - sleep
-    - infinity
-    tty: true
-"""
-        }
+        label 'agent-node1'
     }
 
     environment {
@@ -30,7 +9,7 @@ spec:
         DOCKER_IMAGE = 'sandyxd18/backend-tubes'
         IMAGE_TAG = ''
         GIT_CREDENTIALS_ID = 'github-creds'
-        DOCKER_CREDENTIALS_ID = 'dockerhub-creds'
+        DOCKER_CREDENTIALS_ID = 'a77b13b7-6e11-4652-9760-e73ef64c6d32'
         ARGOCD_CREDENTIALS_ID = 'argocd-creds'
         ARGOCD_SERVER = '192.168.22.172:31014'
         APP_NAME = 'backend'
@@ -39,53 +18,46 @@ spec:
     stages {
         stage('Clone Backend Repo') {
             steps {
-                container('git') {
-                    git branch: 'main', url: "${APP_REPO}", credentialsId: "${GIT_CREDENTIALS_ID}"
-                }
+                git branch: 'main', url: "${APP_REPO}"
             }
         }
 
-    stage('Build and Push Docker Image') {
-        steps {
-            container('kaniko') {
+        stage('Build and Push Docker Images') {
+            steps {
                 script {
-                    IMAGE_TAG = "v${env.BUILD_NUMBER}"
-                    sh """
-                        /kaniko/executor \
-                        --dockerfile=Dockerfile \
-                        --context=dir://${env.WORKSPACE} \
-                        --destination=${DOCKER_IMAGE}:${IMAGE_TAG} \
-                        --skip-tls-verify
-                    """
+                    def imageTag = "v${env.BUILD_NUMBER}"
+                    env.IMAGE_TAG = imageTag
+                    withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh """
+                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                            docker build -t ${DOCKER_IMAGE}:${imageTag} .
+                            docker push ${DOCKER_IMAGE}:${imageTag}
+                        """
+                    }
                 }
             }
         }
-    }
 
         stage('Clone Manifest Repo') {
             steps {
-                container('git') {
-                    dir('manifest') {
-                        git url: "${MANIFEST_REPO}", credentialsId: "${GIT_CREDENTIALS_ID}"
-                    }
+                dir('manifest') {
+                    git url: "${MANIFEST_REPO}", credentialsId: "${GIT_CREDENTIALS_ID}"
                 }
             }
         }
 
         stage('Update Image Tag') {
             steps {
-                container('git') {
-                    dir('manifest/backend-manifest') {
-                        script {
-                            sh """
-                              sed -i 's|image: ${DOCKER_IMAGE}:.*|image: ${DOCKER_IMAGE}:${IMAGE_TAG}|' backend-deployment.yaml
-                              git config user.name "jenkins"
-                              git config user.email "jenkins@example.com"
-                              git add .
-                              git commit -m "Update image tag to ${IMAGE_TAG}"
-                              git push origin main
-                            """
-                        }
+                dir('manifest/backend-manifest') {
+                    script {
+                        sh """
+                            sed -i 's|image: ${DOCKER_IMAGE}:.*|image: ${DOCKER_IMAGE}:${IMAGE_TAG}|' backend-deployment.yaml
+                            git config user.name "jenkins"
+                            git config user.email "jenkins@example.com"
+                            git add .
+                            git commit -m "Update image tag to ${IMAGE_TAG}" || echo 'No changes to commit'
+                            git push origin main
+                        """
                     }
                 }
             }
@@ -93,11 +65,11 @@ spec:
 
         stage('Sync ArgoCD') {
             steps {
-                container('argocd') {
-                    withCredentials([usernamePassword(credentialsId: "${ARGOCD_CREDENTIALS_ID}", usernameVariable: 'ARGOCD_USER', passwordVariable: 'ARGOCD_PASS')]) {
+                script {
+                    withCredentials([usernamePassword(credentialsId: ARGOCD_CREDENTIALS_ID, usernameVariable: 'ARGOCD_USER', passwordVariable: 'ARGOCD_PASS')]) {
                         sh """
-                          argocd login ${ARGOCD_SERVER} --username $ARGOCD_USER --password $ARGOCD_PASS --insecure
-                          argocd app sync ${APP_NAME}
+                            argocd login ${ARGOCD_SERVER} --username $ARGOCD_USER --password $ARGOCD_PASS --insecure
+                            argocd app sync ${APP_NAME}
                         """
                     }
                 }
