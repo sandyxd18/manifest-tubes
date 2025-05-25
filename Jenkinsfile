@@ -29,9 +29,9 @@ pipeline {
                     env.IMAGE_TAG = imageTag
                     withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         sh """
-                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                            docker build -t ${DOCKER_IMAGE}:${imageTag} .
-                            docker push ${DOCKER_IMAGE}:${imageTag}
+                            buildah bud -t ${DOCKER_IMAGE}:${IMAGE_TAG} .
+                            buildah login -u $DOCKER_USER -p $DOCKER_PASS docker.io
+                            buildah push ${DOCKER_IMAGE}:${IMAGE_TAG}
                         """
                     }
                 }
