@@ -1,25 +1,27 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-todo
+  name: frontend-ingress
   namespace: frontend
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
-    cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
+  ingressClassName: nginx
   tls:
   - hosts:
-    - your-domain.example.com
-    secretName: frontend-tls
+    - todolist.com  # Ganti dengan domain Anda
+    secretName: self-signed-tls-frontend  # Nama secret yang menyimpan cert self-signed
   rules:
-  - host: your-domain.example.com
+  - host: todolist.com  # Ganti dengan domain Anda
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: frontend-loadbalancer
+            name: frontend-service
             port:
               number: 80
       # - path: /api
