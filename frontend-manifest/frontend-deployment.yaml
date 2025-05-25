@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: frontend-reactjs:v1
+        image: sandyxd18/frontend-reactjs:v1
         ports:
         - containerPort: 80
 ---
