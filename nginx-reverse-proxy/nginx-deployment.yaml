@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest
+          ports:
+            - containerPort: 443
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
+            - name: tls-secret
+              mountPath: /etc/nginx/ssl
+              readOnly: true
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+        - name: tls-secret
+          secret:
+            secretName: nginx-tls
