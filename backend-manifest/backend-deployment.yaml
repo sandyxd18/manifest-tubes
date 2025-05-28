@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: sandyxd18/backend-tubes:v30
+        image: sandyxd18/backend-tubes:v31
         ports:
           - containerPort: 5000
         env:
