@@ -5,14 +5,14 @@ metadata:
   namespace: frontend
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
   ingressClassName: nginx
   tls:
   - hosts:
     - todolist.com  # Ganti dengan domain Anda
-    secretName: self-signed-tls-frontend  # Nama secret yang menyimpan cert self-signed
+    # secretName: self-signed-tls-frontend  # Nama secret yang menyimpan cert self-signed
   rules:
   - host: todolist.com  # Ganti dengan domain Anda
     http:
